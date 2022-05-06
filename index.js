@@ -10,6 +10,25 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+// jwt function
+function verifyJWT(req,res,next){
+    const authHeader=req.headers.authorization;
+    if(!authHeader){
+        return res.status(401).send({message:'you are unauthorised'})
+    }
+    const token=authHeader.split(' ')[1]
+    jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(err,decoded)=>{
+        if(err){
+            return res.status(403).send({message:'access forbidden'})
+        }
+        console.log('decoded',decoded)
+        req.decoded=decoded
+        next();
+    })
+    
+    
+}
+
 // database connection 
 
 
@@ -73,14 +92,18 @@ res.send({accessToken});
             res.send(result);
         })
         // my item
-        app.get('/myItem', async (req, res) => {
-            const authHeader=req.headers.authorization;
-            console.log(authHeader)
+        app.get('/myItem',verifyJWT, async (req, res) => {
+           const decodedEmail=req.decoded.email
             const email = req.query.email
+           if(email === decodedEmail){
             const query = { email: email }
             const cursor = itemCollection.find(query)
             const result = await cursor.toArray()
             res.send(result)
+           }
+           else{
+               res.status(403).send({message:'access forbidden'})
+           }
         })
     }
     finally {
