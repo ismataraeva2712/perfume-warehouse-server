@@ -74,6 +74,8 @@ res.send({accessToken});
         })
         // my item
         app.get('/myItem', async (req, res) => {
+            const authHeader=req.headers.authorization;
+            console.log(authHeader)
             const email = req.query.email
             const query = { email: email }
             const cursor = itemCollection.find(query)
